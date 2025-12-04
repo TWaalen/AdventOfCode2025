@@ -12,41 +12,21 @@ pub fn main() !void {
     const day: i8 = if (args.next()) |a| try std.fmt.parseInt(i8, std.mem.sliceTo(a, 0), 10) else 1;
     const part: i8 = if (args.next()) |a| try std.fmt.parseInt(i8, std.mem.sliceTo(a, 0), 10) else 1;
 
+    const file = try std.fs.cwd().openFile(filename, .{ .mode = .read_only });
+    defer file.close();
+
+    var read_buf: [1024]u8 = undefined;
+    var file_reader = file.reader(&read_buf);
+
+    var writer = std.Io.Writer.Allocating.init(alloc);
+    defer writer.deinit();
+
     std.debug.print("filename: {s}, day: {d}, part: {d}\n", .{ filename, day, part });
-    if (day == 1) {
-        var executeDialTurn: *const fn (dialIndex: i16, password: i16, delta: i16) error{NotImplemented}!day1.DialTurnResult = undefined;
-        if (part == 1) { executeDialTurn = day1.executeDialTurn_part1; }
-        else if (part == 2) { executeDialTurn = day1.executeDialTurn_part2; }
-
-        const file = try std.fs.cwd().openFile(filename, .{ .mode = .read_only });
-        defer file.close();
-
-        var read_buf: [1024]u8 = undefined;
-        var file_reader = file.reader(&read_buf);
-        const reader = &file_reader.interface;
-
-        var line = std.Io.Writer.Allocating.init(alloc);
-        defer line.deinit();
-
-        var password: i16 = 0;
-        var dialIndex: i16 = 50;
-        while(true) {
-            _ = reader.streamDelimiter(&line.writer, '\n') catch |err| {
-                if (err == error.EndOfStream) break else return err;
-            };
-            _ = reader.toss(1);
-
-            const delta = try day1.parseDialTurn(line.written());
-
-            const result = try executeDialTurn(dialIndex, password, delta);
-            dialIndex = result.dialIndex;
-            password = result.password;
-
-            line.clearRetainingCapacity();
-        }
-
-        std.debug.print("Password: {d}\n", .{password});
-    }
+    const solution = try switch (day) {
+        1 => day1.solve(part, &file_reader.interface, &writer),
+        else => error.NotImplemented,
+    };
+    std.debug.print("Solution: {d}\n", .{solution});
 }
 
 const std = @import("std");

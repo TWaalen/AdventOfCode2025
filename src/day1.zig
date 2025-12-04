@@ -1,14 +1,39 @@
 const std = @import("std");
 
 /// The result of a dial turn
-pub const DialTurnResult = struct {
+const DialTurnResult = struct {
     /// The dial index after turning the dial
     dialIndex: i16,
     /// The (accumulated) password after turning the dial
     password: i16,
 };
 
-pub fn parseDialTurn(input: []const u8) !i16 {
+pub fn solve(part: i8, reader: *std.Io.Reader, writer: *std.Io.Writer.Allocating) !u64 {
+    var executeDialTurn: *const fn (dialIndex: i16, password: i16, delta: i16) error{NotImplemented}!DialTurnResult = undefined;
+    if (part == 1) { executeDialTurn = executeDialTurn_part1; }
+    else if (part == 2) { executeDialTurn = executeDialTurn_part2; }
+
+    var password: i16 = 0;
+    var dialIndex: i16 = 50;
+    while(true) {
+        _ = reader.streamDelimiter(&writer.*.writer, '\n') catch |err| {
+            if (err == error.EndOfStream) break else return err;
+        };
+        _ = reader.toss(1);
+
+        const delta = try parseDialTurn(writer.*.written());
+
+        const result = try executeDialTurn(dialIndex, password, delta);
+        dialIndex = result.dialIndex;
+        password = result.password;
+
+        writer.clearRetainingCapacity();
+    }
+
+    return @intCast(password);
+}
+
+fn parseDialTurn(input: []const u8) !i16 {
     const direction = input[0];
     const steps = try std.fmt.parseInt(i16, input[1..], 10);
 
@@ -19,7 +44,7 @@ pub fn parseDialTurn(input: []const u8) !i16 {
     return -steps;
 }
 
-pub fn executeDialTurn_part1(dialIndex: i16, password: i16, delta: i16) !DialTurnResult {
+fn executeDialTurn_part1(dialIndex: i16, password: i16, delta: i16) !DialTurnResult {
     const newDialIndex = @mod(dialIndex + delta, 100);
     var newPassword = password;
     if (dialIndex == 0) newPassword += 1;
@@ -30,7 +55,7 @@ pub fn executeDialTurn_part1(dialIndex: i16, password: i16, delta: i16) !DialTur
     };
 }
 
-pub fn executeDialTurn_part2(dialIndex: i16, password: i16, delta: i16) !DialTurnResult {
+fn executeDialTurn_part2(dialIndex: i16, password: i16, delta: i16) !DialTurnResult {
     var newDialIndex = dialIndex + delta;
     const absNewDialIndex = @abs(newDialIndex);
 
