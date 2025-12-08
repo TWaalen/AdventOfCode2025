@@ -1,7 +1,10 @@
 const std = @import("std");
 
 pub fn solve(part: i8, reader: *std.Io.Reader, writer: *std.Io.Writer.Allocating) !u64 {
-    if (part != 1) { return error.NotImplemented; }
+    var findMaxJoltageInBank: *const fn ([]const u8) std.fmt.ParseIntError!u64 = undefined;
+    if (part == 1) { findMaxJoltageInBank = findMaxJoltageInBank_part1; }
+    else if (part == 2) { findMaxJoltageInBank = findMaxJoltageInBank_part2; }
+    else { return error.NotImplemented; }
 
     var totalMaxJoltage: u64 = 0;
     while (true) {
@@ -10,7 +13,7 @@ pub fn solve(part: i8, reader: *std.Io.Reader, writer: *std.Io.Writer.Allocating
         };
         _ = reader.toss(1);
 
-        totalMaxJoltage += findMaxJoltageInBank(writer.*.written());
+        totalMaxJoltage += try findMaxJoltageInBank(writer.*.written());
 
         writer.*.clearRetainingCapacity();
     }
@@ -18,7 +21,7 @@ pub fn solve(part: i8, reader: *std.Io.Reader, writer: *std.Io.Writer.Allocating
     return totalMaxJoltage;
 }
 
-fn findMaxJoltageInBank(bank: []const u8) u8 {
+fn findMaxJoltageInBank_part1(bank: []const u8) !u64 {
     var maxLeftJoltage: u8 = '0';
     var maxRightJoltage: u8 = '0';
     for (bank, 0..) |joltage, i| {
@@ -32,7 +35,25 @@ fn findMaxJoltageInBank(bank: []const u8) u8 {
     return (maxLeftJoltage - 48) * 10 + maxRightJoltage - 48;
 }
 
-test "max joltage in bank" {
+fn findMaxJoltageInBank_part2(bank: []const u8) !u64 {
+    var maxJoltage: [12]u8 = undefined;
+    @memset(&maxJoltage, '0');
+
+    for (bank, 0..) |joltage, i| {
+        for (0..12) |j| {
+            if (i > bank.len - (12 - j)) { continue; }
+            if (joltage > maxJoltage[j]) {
+                maxJoltage[j] = joltage;
+                if (j != 11) { @memset(maxJoltage[j + 1..12], '0'); }
+                break;
+            }
+        }
+    }
+
+    return try std.fmt.parseInt(u64, &maxJoltage, 10);
+}
+
+test "max joltage in bank (part 1)" {
     const cases = [_] struct {
         input: []const u8,
         expected: u8,
@@ -45,7 +66,25 @@ test "max joltage in bank" {
 
     for (cases) |case| {
         errdefer std.debug.print("input: {s}\n", .{case.input});
-        const result = findMaxJoltageInBank(case.input);
+        const result = findMaxJoltageInBank_part1(case.input);
+        try std.testing.expectEqual(case.expected, result);
+    }
+}
+
+test "max joltage in bank (part 2)" {
+    const cases = [_] struct {
+        input: []const u8,
+        expected: u64,
+    }{
+        .{ .input = "987654321111111", .expected = 987654321111 },
+        .{ .input = "811111111111119", .expected = 811111111119 },
+        .{ .input = "234234234234278", .expected = 434234234278 },
+        .{ .input = "818181911112111", .expected = 888911112111 },
+    };
+
+    for (cases) |case| {
+        errdefer std.debug.print("input: {s}\n", .{case.input});
+        const result = findMaxJoltageInBank_part2(case.input);
         try std.testing.expectEqual(case.expected, result);
     }
 }

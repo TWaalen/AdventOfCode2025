@@ -30,20 +30,9 @@
   ],
   "modules": [
     {
-      "root": "src/root.zig",
-      "public": false,
-      "imports": []
-    },
-    {
       "root": "src/main.zig",
       "public": false,
-      "imports": [
-        {
-          "name": "AdventOfCode_lib",
-          "owner": 0,
-          "module": 0
-        }
-      ]
+      "imports": []
     }
   ],
   "dependencies": []
