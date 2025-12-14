@@ -2,6 +2,7 @@ const day1 = @import("day1.zig");
 const day2 = @import("day2.zig");
 const day3 = @import("day3.zig");
 const day4 = @import("day4.zig");
+const day5 = @import("day5.zig");
 
 pub fn main() !void {
     var gpa = std.heap.DebugAllocator(.{}){};
@@ -32,6 +33,7 @@ pub fn main() !void {
         2 => day2.solve(part, &file_reader.interface, &writer),
         3 => day3.solve(part, &file_reader.interface, &writer),
         4 => day4.solve(part, &file_reader, &writer),
+        5 => day5.solve(&file_reader.interface),
         else => error.NotImplemented,
     };
     std.debug.print("Solution: {d}\n", .{solution});
@@ -45,4 +47,5 @@ comptime {
     _ = @import("day2.zig");
     _ = @import("day3.zig");
     _ = @import("day4.zig");
+    _ = @import("day5.zig");
 }
