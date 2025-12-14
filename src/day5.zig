@@ -1,6 +1,12 @@
 const std = @import("std");
 
-pub fn solve(reader: *std.Io.Reader) !u64 {
+pub fn solve(part: i8, reader: *std.Io.Reader) !u64 {
+    if (part == 1) { return solve_part1(reader); }
+    else if (part == 2) { return solve_part2(reader); }
+    return error.NotImplemented;
+}
+
+inline fn solve_part1(reader: *std.Io.Reader) !u64 {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
@@ -42,6 +48,95 @@ pub fn solve(reader: *std.Io.Reader) !u64 {
     }
 
     return freshIngredientCount;
+}
+
+inline fn solve_part2(reader: *std.Io.Reader) !u64 {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
+
+    var ranges = std.ArrayList(struct { u64, u64 }).empty;
+    defer ranges.deinit(allocator);
+
+    var writer = std.Io.Writer.Allocating.init(allocator);
+    defer writer.deinit();
+
+    while (true) {
+        const bytesRead = reader.streamDelimiter(&writer.writer, '\n') catch |err| {
+            if (err == error.EndOfStream) break else return err;
+        };
+        reader.toss(1);
+
+        if (bytesRead == 0) { break; }
+
+        var hasMergedRange = false;
+        const parsedRange = try parseIdRange(writer.written());
+        for (ranges.items, 0..) |range, i| {
+            if (parsedRange[0] > range[1] or parsedRange[1] < range[0]) { continue; }
+
+            if (parsedRange[0] >= range[0] and parsedRange[1] <= range[1]) {
+                hasMergedRange = true;
+                break;
+            }
+
+            if (parsedRange[0] >= range[0] and parsedRange[0] <= range[1]) {
+                ranges.items[i][1] = parsedRange[1];
+                hasMergedRange = true;
+                break;
+            }
+
+            if (parsedRange[1] >= range[0] and parsedRange[1] <= range[1]) {
+                ranges.items[i][0] = parsedRange[0];
+                hasMergedRange = true;
+                break;
+            }
+        }
+
+        if (!hasMergedRange) { try ranges.append(allocator, parsedRange); }
+        writer.clearRetainingCapacity();
+    }
+
+    while (true) {
+        var hasMergedRanges = false;
+        outer: for (ranges.items, 0..) |range, i| {
+            for (i + 1..ranges.items.len) |j| {
+                const checkRange = ranges.items[j];
+                if (checkRange[0] > range[1] or checkRange[1] < range[0]) {
+                    continue;
+                }
+
+                if (checkRange[0] >= range[0] and checkRange[1] <= range[1]) {
+                    _ = ranges.swapRemove(j);
+                    hasMergedRanges = true;
+                    break :outer;
+                }
+
+                if (checkRange[0] >= range[0] and checkRange[0] <= range[1]) {
+                    ranges.items[i][1] = checkRange[1];
+                    _ = ranges.swapRemove(j);
+                    hasMergedRanges = true;
+                    break :outer;
+                }
+
+                if (checkRange[1] >= range[0] and checkRange[1] <= range[1]) {
+                    ranges.items[i][0] = checkRange[0];
+                    _ = ranges.swapRemove(j);
+                    hasMergedRanges = true;
+                    break :outer;
+                }
+            }
+        }
+
+        if (!hasMergedRanges) { break; }
+    }
+
+    var totalFreshIngredients: u64 = 0;
+    for (ranges.items) |range| {
+        totalFreshIngredients += range[1] - range[0] + 1;
+    }
+
+
+    return totalFreshIngredients;
 }
 
 fn parseIdRange(input: []const u8) !struct { u64, u64 } {
@@ -88,7 +183,7 @@ test isIdInRange {
             .input = .{ .id = 2121212120, .range = .{ 2121212118, 2121212124 } },
             .expected = true,
         }, .{
-           .input = .{ .id = 2334345, .range = .{ 8989806846, 8989985017 } },
+            .input = .{ .id = 2334345, .range = .{ 8989806846, 8989985017 } },
             .expected = false
         }
     };
@@ -115,6 +210,8 @@ test "passes example input" {
     ;
 
     var reader = std.Io.Reader.fixed(input);
-    try std.testing.expectEqual(3, solve(&reader));
+    try std.testing.expectEqual(3, solve_part1(&reader));
+    reader.seek = 0;
+    try std.testing.expectEqual(14, solve_part2(&reader));
 }
 

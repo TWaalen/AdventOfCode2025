@@ -33,7 +33,7 @@ pub fn main() !void {
         2 => day2.solve(part, &file_reader.interface, &writer),
         3 => day3.solve(part, &file_reader.interface, &writer),
         4 => day4.solve(part, &file_reader, &writer),
-        5 => day5.solve(&file_reader.interface),
+        5 => day5.solve(part, &file_reader.interface),
         else => error.NotImplemented,
     };
     std.debug.print("Solution: {d}\n", .{solution});
