@@ -1,8 +1,11 @@
+const SeekableReader = @import("utils/SeekableReader.zig");
+
 const day1 = @import("day1.zig");
 const day2 = @import("day2.zig");
 const day3 = @import("day3.zig");
 const day4 = @import("day4.zig");
 const day5 = @import("day5.zig");
+const day6 = @import("day6.zig");
 
 pub fn main() !void {
     var gpa = std.heap.DebugAllocator(.{}){};
@@ -23,6 +26,7 @@ pub fn main() !void {
 
     var read_buf: [1024]u8 = undefined;
     var file_reader = file.reader(&read_buf);
+    var seekable_reader = SeekableReader.fromFile(&file_reader);
 
     var writer = std.Io.Writer.Allocating.init(alloc);
     defer writer.deinit();
@@ -34,6 +38,7 @@ pub fn main() !void {
         3 => day3.solve(part, &file_reader.interface, &writer),
         4 => day4.solve(part, &file_reader, &writer),
         5 => day5.solve(part, &file_reader.interface),
+        6 => day6.solve(&seekable_reader),
         else => error.NotImplemented,
     };
     std.debug.print("Solution: {d}\n", .{solution});
@@ -43,9 +48,11 @@ const std = @import("std");
 
 comptime {
     _ = @import("utils/RingBuffer.zig");
+    _ = @import("utils/SeekableReader.zig");
     _ = @import("day1.zig");
     _ = @import("day2.zig");
     _ = @import("day3.zig");
     _ = @import("day4.zig");
     _ = @import("day5.zig");
+    _ = @import("day6.zig");
 }
