@@ -7,6 +7,7 @@ const day4 = @import("day4.zig");
 const day5 = @import("day5.zig");
 const day6 = @import("day6.zig");
 const day7 = @import("day7.zig");
+const day8 = @import("day8.zig");
 
 pub fn main() !void {
     var gpa = std.heap.DebugAllocator(.{}){};
@@ -41,6 +42,7 @@ pub fn main() !void {
         5 => day5.solve(part, &file_reader.interface),
         6 => if (part == 1) day6.solve_part1(&seekable_reader) else day6.solve_part2(&seekable_reader),
         7 => if (part == 1) day7.solve_part1(&file_reader.interface, &writer) else day7.solve_part2(&file_reader.interface, &writer),
+        8 => day8.solve(&file_reader.interface, &writer, 1000),
         else => error.NotImplemented,
     };
     std.debug.print("Solution: {d}\n", .{solution});
@@ -51,6 +53,7 @@ const std = @import("std");
 comptime {
     _ = @import("utils/RingBuffer.zig");
     _ = @import("utils/SeekableReader.zig");
+    _ = @import("utils/Vector3i.zig");
     _ = @import("day1.zig");
     _ = @import("day2.zig");
     _ = @import("day3.zig");
@@ -58,4 +61,5 @@ comptime {
     _ = @import("day5.zig");
     _ = @import("day6.zig");
     _ = @import("day7.zig");
+    _ = @import("day8.zig");
 }
