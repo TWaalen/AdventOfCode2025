@@ -42,7 +42,7 @@ pub fn main() !void {
         5 => day5.solve(part, &file_reader.interface),
         6 => if (part == 1) day6.solve_part1(&seekable_reader) else day6.solve_part2(&seekable_reader),
         7 => if (part == 1) day7.solve_part1(&file_reader.interface, &writer) else day7.solve_part2(&file_reader.interface, &writer),
-        8 => day8.solve(&file_reader.interface, &writer, 1000),
+        8 => day8.solve(part, &file_reader.interface, &writer, 1000),
         else => error.NotImplemented,
     };
     std.debug.print("Solution: {d}\n", .{solution});

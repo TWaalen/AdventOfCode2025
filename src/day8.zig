@@ -14,7 +14,7 @@ fn sortJunctionBoxPair(_: void, lhs: JunctionBoxPair, rhs: JunctionBoxPair) bool
     return (comptime std.sort.asc(u64))({}, lhs.distance, rhs.distance);
 }
 
-pub fn solve(reader: *std.Io.Reader, writer: *std.Io.Writer.Allocating, limiter: usize) !u64 {
+pub fn solve(part: i8, reader: *std.Io.Reader, writer: *std.Io.Writer.Allocating, limiter: usize) !u64 {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
@@ -33,30 +33,29 @@ pub fn solve(reader: *std.Io.Reader, writer: *std.Io.Writer.Allocating, limiter:
         circuits.deinit(allocator);
     }
 
-    for (pairs.items, 0..) |pair, i| {
-        if (i == limiter) { break; }
+    if (part == 1) {
+        for (pairs.items, 0..) |pair, i| {
+            if (i == limiter) { break; }
 
-        const circuit1 = findCircuitContainingJunctionBox(&circuits, pair.junctionBox1);
-        const circuit2 = findCircuitContainingJunctionBox(&circuits, pair.junctionBox2);
+            try connectJunctionBoxPair(allocator, pair, &circuits);
+        }
 
-        if (circuit1 != null and circuit2 != null) {
-            if (circuit1 == circuit2) { continue; }
-
-            try circuits.items[circuit1.?].appendSlice(allocator, circuits.items[circuit2.?].items);
-            var circuit = circuits.swapRemove(circuit2.?);
-            circuit.deinit(allocator);
-        } else if (circuit1 != null) {
-            try circuits.items[circuit1.?].append(allocator, pair.junctionBox2);
-        } else if (circuit2 != null) {
-            try circuits.items[circuit2.?].append(allocator, pair.junctionBox1);
-        } else {
-            var newCircuit = Circuit.empty;
-            try newCircuit.append(allocator, pair.junctionBox1);
-            try newCircuit.append(allocator, pair.junctionBox2);
-            try circuits.append(allocator, newCircuit);
+        return calculateAnswer_part1(circuits);
+    } else if (part == 2) {
+        for (pairs.items) |pair| {
+            try connectJunctionBoxPair(allocator, pair, &circuits);
+            
+            if (circuits.items.len == 1 and circuits.items[0].items.len == junctionBoxes.items.len) {
+                return std.math.cast(u64, junctionBoxes.items[pair.junctionBox1].components[0]).? *
+                    std.math.cast(u64, junctionBoxes.items[pair.junctionBox2].components[0]).?;
+            }
         }
     }
 
+    return error.InvalidPart;
+}
+
+fn calculateAnswer_part1(circuits: CircuitList) u64 {
     var top3CircuitLengths: [3]usize = .{ 0 } ** 3;
     for (circuits.items) |circuit| {
         if (circuit.items.len > top3CircuitLengths[0]) {
@@ -88,6 +87,28 @@ fn collectPairs(allocator: std.mem.Allocator, junctionBoxes: JunctionBoxList) !s
 
     std.mem.sort(JunctionBoxPair, junctionPairs.items, {}, sortJunctionBoxPair);
     return junctionPairs;
+}
+
+fn connectJunctionBoxPair(allocator: std.mem.Allocator, pair: JunctionBoxPair, circuits: *CircuitList) !void {
+    const circuit1 = findCircuitContainingJunctionBox(circuits, pair.junctionBox1);
+    const circuit2 = findCircuitContainingJunctionBox(circuits, pair.junctionBox2);
+
+    if (circuit1 != null and circuit2 != null) {
+        if (circuit1 == circuit2) { return; }
+
+        try circuits.items[circuit1.?].appendSlice(allocator, circuits.items[circuit2.?].items);
+        var circuit = circuits.swapRemove(circuit2.?);
+        circuit.deinit(allocator);
+    } else if (circuit1 != null) {
+        try circuits.items[circuit1.?].append(allocator, pair.junctionBox2);
+    } else if (circuit2 != null) {
+        try circuits.items[circuit2.?].append(allocator, pair.junctionBox1);
+    } else {
+        var newCircuit = Circuit.empty;
+        try newCircuit.append(allocator, pair.junctionBox1);
+        try newCircuit.append(allocator, pair.junctionBox2);
+        try circuits.append(allocator, newCircuit);
+    }
 }
 
 fn findCircuitContainingJunctionBox(circuits: *CircuitList, junctionBox: usize) ?usize {
@@ -174,5 +195,8 @@ test "passes example input (part 1)" {
     var reader = std.Io.Reader.fixed(input);
     var writer = std.Io.Writer.Allocating.init(std.testing.allocator);
     defer writer.deinit();
-    try std.testing.expectEqual(40, solve(&reader, &writer, 10));
+    try std.testing.expectEqual(40, solve(1, &reader, &writer, 10));
+    reader.seek = 0;
+    reader.end = input.len;
+    try std.testing.expectEqual(25272, solve(2, &reader, &writer, 10));
 }
