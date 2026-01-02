@@ -167,7 +167,7 @@ test parseVector {
     try std.testing.expectError(error.TooManyComponents, parseVector("162,817,812,542"));
 }
 
-test "passes example input (part 1)" {
+test "passes example input" {
     const input: []const u8 =
         \\162,817,812
         \\57,618,57
