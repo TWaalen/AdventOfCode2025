@@ -9,6 +9,7 @@ const day6 = @import("day6.zig");
 const day7 = @import("day7.zig");
 const day8 = @import("day8.zig");
 const day9 = @import("day9.zig");
+const day10 = @import("day10.zig");
 
 pub fn main() !void {
     var gpa = std.heap.DebugAllocator(.{}){};
@@ -45,6 +46,7 @@ pub fn main() !void {
         7 => if (part == 1) day7.solve_part1(&file_reader.interface, &writer) else day7.solve_part2(&file_reader.interface, &writer),
         8 => day8.solve(part, &file_reader.interface, &writer, 1000),
         9 => day9.solve(part, &file_reader.interface, &writer),
+        10 => day10.solve(alloc, &file_reader.interface, &writer),
         else => error.NotImplemented,
     };
     std.debug.print("Solution: {d}\n", .{solution});
@@ -65,4 +67,5 @@ comptime {
     _ = @import("day7.zig");
     _ = @import("day8.zig");
     _ = @import("day9.zig");
+    _ = @import("day10.zig");
 }
